@@ -2,50 +2,84 @@ import streamlit as st
 import pandas as pd
 
 # Sayfa Ayarları
-st.set_page_config(page_title="Bilirkişi Araç Analiz", layout="centered")
+st.set_page_config(page_title="Bilirkişi Araç Değerleme", layout="wide")
 
-st.title("⚖️ Bilirkişi Araç Değerleme Sistemi")
-st.info("Bu uygulama internet üzerindeki güncel verileri ve bilirkişi formüllerini kullanarak analiz yapar.")
+st.title("⚖️ Profesyonel Bilirkişi Araç Analiz Sistemi")
 
-# Giriş Alanları
-with st.form("arac_formu"):
-    col1, col2 = st.columns(2)
+# --- VERİ SETİ (Örnek listeleri genişletebilirsiniz) ---
+arac_tipleri = ["Otomobil", "Kamyonet", "Kamyon", "Çekici (Tır)", "Otobüs", "Motosiklet"]
+renkler = ["Beyaz", "Siyah", "Gri (Gümüş)", "Gri (Füme)", "Kırmızı", "Mavi", "Diğer"]
+
+# Marka ve Model İlişkisi
+marka_model_verisi = {
+    "Volkswagen": ["Passat", "Golf", "Polo", "Tiguan", "Transporter"],
+    "Renault": ["Clio", "Megane", "Symbol", "Fluence", "Master"],
+    "Fiat": ["Egea", "Linea", "Doblo", "Fiorino", "Ducato"],
+    "Ford": ["Focus", "Fiesta", "Transit", "Courier", "F-Max (Tır)"],
+    "Mercedes-Benz": ["C-Serisi", "E-Serisi", "Actros (Tır)", "Vito", "Sprinter"],
+    "Toyota": ["Corolla", "Yaris", "Hilux", "Auris"],
+    "BMW": ["3 Serisi", "5 Serisi", "1 Serisi", "X5"]
+}
+
+# --- ARAYÜZ TASARIMI ---
+st.sidebar.header("📋 Araç Tanımlama")
+
+# 1. Araç Cinsi ve Rengi
+cins = st.sidebar.selectbox("Araç Cinsi", arac_tipleri)
+renk = st.sidebar.selectbox("Renk", renkler)
+
+# 2. Dinamik Marka/Model Seçimi
+marka = st.sidebar.selectbox("Marka", list(marka_model_verisi.keys()))
+model = st.sidebar.selectbox("Model", marka_model_verisi[marka])
+
+# 3. Teknik Detaylar
+yil = st.sidebar.number_input("Model Yılı", 1990, 2026, 2020)
+km = st.sidebar.number_input("Kilometre", 0, 2000000, 50000)
+vites = st.sidebar.selectbox("Vites/Şanzıman", ["Manuel", "Yarı Otomatik", "Tam Otomatik"])
+
+st.sidebar.divider()
+
+# 4. Hasar ve Kaza Bilgileri
+st.sidebar.header("💥 Hasar Durumu")
+tramer = st.sidebar.number_input("Toplam Tramer Kaydı (TL)", 0, 5000000, 0)
+kaza_bedeli = st.sidebar.number_input("İncelenen Kaza Onarım Bedeli (TL)", 0, 1000000, 0)
+
+# --- HESAPLAMA VE ANALİZ ---
+if st.sidebar.button("Analiz Raporu Oluştur"):
+    st.subheader(f"🔍 Araç Analiz Özeti: {marka} {model}")
+    
+    # Bilirkişi hesaplama simülasyonu
+    # (Bu değerler internetteki ortalama verileri temsil eder)
+    taban_fiyat = 1000000  # Örnek taban fiyat
+    km_etkisi = (km / 10000) * 5000  # Her 10bin km için 5bin TL düşüş (örnektir)
+    
+    # Tahmini Rayiç Değer
+    tahmini_rayic = taban_fiyat - km_etkisi
+    
+    # Değer Kaybı Hesaplama (Yargıtay/Sigorta Mevzuatı Taslağı)
+    # Değer kaybı genellikle onarım bedelinin %15-45'i arası değişir (KM ve yaşa göre)
+    km_katsayisi = 1.0 if km < 50000 else (0.7 if km < 150000 else 0.3)
+    hesaplanan_deger_kaybi = kaza_bedeli * 0.5 * km_katsayisi
+
+    # Sonuç Paneli
+    col1, col2, col3 = st.columns(3)
     with col1:
-        marka = st.text_input("Marka")
-        model = st.text_input("Model")
-        yil = st.number_input("Model Yılı", 1990, 2026, 2020)
+        st.metric("Piyasa Rayiç (Hasarsız)", f"{tahmini_rayic:,.0f} TL")
     with col2:
-        km = st.number_input("Kilometre", 0, 1000000, 50000)
-        vites = st.selectbox("Vites", ["Manuel", "Otomatik"])
-        hasar = st.number_input("Tramer Kaydı (TL)", 0, 1000000, 0)
-    
-    onarim_bedeli = st.number_input("Son Kaza Onarım Bedeli (TL)", 0, 500000, 0)
-    submit = st.form_submit_button("Analizi Başlat")
+        st.metric("Hesaplanan Değer Kaybı", f"{hesaplanan_deger_kaybi:,.0f} TL", delta="-Zarar")
+    with col3:
+        st.metric("Nihai Değer (Hasarlı)", f"{tahmini_rayic - hesaplanan_deger_kaybi:,.0f} TL")
 
-if submit:
-    # Bilirkişi Hesaplama Mantığı (Örnek Formül)
-    # Değer Kaybı Katsayısı: $$DK = (Baz Fiyat \times KM Katsayısı \times Parça Katsayısı)$$
-    
-    st.subheader("📊 Analiz Sonuçları")
-    
-    # Simüle edilmiş piyasa araştırması (Google/Sahibinden verisi varsayımı)
-    rayic_fiyat = 1250000  # Bu kısım API veya scraping ile dinamikleşebilir
-    
-    # KM Katsayısı Hesaplama
-    km_katsayi = 1.0 if km < 20000 else (0.8 if km < 100000 else 0.5)
-    
-    deger_kaybi = (onarim_bedeli * 0.6) * km_katsayi
-    guncel_deger = rayic_fiyat - deger_kaybi - (hasar * 0.2)
+    st.divider()
 
-    c1, c2 = st.columns(2)
-    c1.metric("Tahmini Rayiç Değer", f"{rayic_fiyat:,.0f} TL")
-    c2.metric("Hesaplanan Değer Kaybı", f"{deger_kaybi:,.0f} TL", delta_color="inverse")
-    
-    st.success(f"Aracın Nihai Bilirkişi Değeri: **{guncel_deger:,.0f} TL**")
-    
-    # Raporlama Tablosu
-    data = {
-        "Parametre": ["Marka/Model", "Kilometre", "Tramer", "Yasal Değer Kaybı"],
-        "Değer": [f"{marka} {model}", f"{km} KM", f"{hasar} TL", f"{deger_kaybi} TL"]
+    # Bilirkişi Rapor Tablosu
+    rapor_data = {
+        "Kalem": ["Araç Cinsi", "Marka / Model", "Model Yılı / Renk", "Kilometre", "Vites Tipi", "Toplam Tramer"],
+        "Detay": [cins, f"{marka} {model}", f"{yil} / {renk}", f"{km:,.0f} KM", vites, f"{tramer:,.0f} TL"]
     }
-    st.table(pd.DataFrame(data))
+    st.table(pd.DataFrame(rapor_data))
+    
+    st.warning(f"**Bilirkişi Notu:** Bu rapor, {marka} markasının {model} modeli için girilen {km} km ve {kaza_bedeli} TL'lik onarım verileri doğrultusunda oluşturulmuştur.")
+
+else:
+    st.info("Lütfen sol paneldeki bilgileri eksiksiz doldurarak 'Analiz Raporu Oluştur' butonuna basınız.")
