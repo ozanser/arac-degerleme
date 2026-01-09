@@ -1,103 +1,135 @@
 import streamlit as st
 import pandas as pd
 
-# 1. Sayfa Ayarları
-st.set_page_config(page_title="Profesyonel Bilirkişi Paneli", layout="wide")
+# 1. Sayfa Standartları
+st.set_page_config(page_title="Bilirkişi Analiz Sistemi", layout="wide")
 
-# Kurumsal Stil
+# Kurumsal ve Temiz Stil
 st.markdown("""
     <style>
-    .report-title { color: #002b45; border-bottom: 2px solid #002b45; font-weight: bold; }
-    .stButton>button { background-color: #002b45; color: white; border-radius: 0px; font-weight: bold; }
-    .calc-box { background-color: #f1f3f5; padding: 15px; border-radius: 5px; border-left: 5px solid #002b45; }
-    .hakkaniyet-box { background-color: #fff4e6; padding: 15px; border-radius: 5px; border-left: 5px solid #fd7e14; }
+    .report-title { color: #002b45; border-bottom: 3px solid #002b45; font-weight: bold; margin-bottom: 20px; }
+    .stButton>button { background-color: #002b45; color: white; border-radius: 4px; font-weight: bold; width: 100%; height: 3.5em; }
+    .calc-box { background-color: #f8f9fa; padding: 20px; border-left: 6px solid #002b45; border-radius: 5px; }
+    .hakkaniyet-box { background-color: #fff9f2; padding: 20px; border-left: 6px solid #fd7e14; border-radius: 5px; margin-top: 15px; }
     </style>
     """, unsafe_allow_html=True)
 
-st.markdown("<h2 class='report-title'>⚖️ Bilirkişi Araç Değerleme Sistemi (3 Emsal Metodu)</h2>", unsafe_allow_html=True)
+# --- VERİTABANI (Dinamik Menüler İçin) ---
+# Not: Bu liste en yaygın araçları kapsar, manuel metin girişini engellemek için yapılandırılmıştır.
+arac_yapisi = {
+    "Otomobil": {
+        "Volkswagen": ["Passat", "Golf", "Polo", "Tiguan", "Jetta"],
+        "Renault": ["Clio", "Megane", "Symbol", "Fluence", "Austral"],
+        "Fiat": ["Egea", "Linea", "Panda", "500"],
+        "Toyota": ["Corolla", "Yaris", "Auris", "C-HR"],
+        "Mercedes-Benz": ["C-Serisi", "E-Serisi", "A-Serisi", "CLA"],
+        "BMW": ["3 Serisi", "5 Serisi", "1 Serisi", "X5"],
+        "Hyundai": ["i20", "i30", "Accent Blue", "Tucson"]
+    },
+    "Hafif Ticari": {
+        "Ford": ["Transit", "Transit Courier", "Connect"],
+        "Fiat": ["Doblo", "Fiorino", "Ducato"],
+        "Volkswagen": ["Caddy", "Transporter", "Crafter"]
+    },
+    "Ağır Vasıta (Tır/Kamyon)": {
+        "Mercedes-Benz": ["Actros", "Axor", "Atego"],
+        "Volvo": ["FH 16", "FH", "FM"],
+        "Scania": ["R 450", "G 400", "S 500"],
+        "Ford Trucks": ["F-MAX", "1848T"]
+    }
+}
 
-# --- BÖLÜM 1: 3'LÜ PİYASA ARAŞTIRMASI ---
-st.write("### 🔍 1. Piyasa Rayiç Tespiti (En Az 3 Emsal)")
+st.markdown("<h2 class='report-title'>⚖️ Bilirkişi Araç Değer Kaybı Analiz Paneli</h2>", unsafe_allow_html=True)
+
+# --- BÖLÜM 1: PİYASA ARAŞTIRMASI (3 EMSAL) ---
+st.write("### 🔍 1. Piyasa Araştırması (Emsal Karşılaştırma)")
 col_e1, col_e2, col_e3 = st.columns([2, 1, 3])
 
 with col_e1:
-    e1_f = st.number_input("Emsal 1 Fiyat (TL)", min_value=0, value=0)
-    e2_f = st.number_input("Emsal 2 Fiyat (TL)", min_value=0, value=0)
-    e3_f = st.number_input("Emsal 3 Fiyat (TL)", min_value=0, value=0)
+    e1_f = st.number_input("Emsal 1 Fiyat (TL)", min_value=0, step=10000)
+    e2_f = st.number_input("Emsal 2 Fiyat (TL)", min_value=0, step=10000)
+    e3_f = st.number_input("Emsal 3 Fiyat (TL)", min_value=0, step=10000)
 with col_e2:
-    e1_k = st.number_input("Emsal 1 KM", min_value=0, value=0)
-    e2_k = st.number_input("Emsal 2 KM", min_value=0, value=0)
-    e3_k = st.number_input("Emsal 3 KM", min_value=0, value=0)
+    e1_k = st.number_input("Emsal 1 KM", min_value=0, step=1000)
+    e2_k = st.number_input("Emsal 2 KM", min_value=0, step=1000)
+    e3_k = st.number_input("Emsal 3 KM", min_value=0, step=1000)
 with col_e3:
-    e1_n = st.text_input("Emsal 1 Kaynak/Not", placeholder="Link veya Galeri...")
-    e2_n = st.text_input("Emsal 2 Kaynak/Not", placeholder="Link veya Galeri...")
-    e3_n = st.text_input("Emsal 3 Kaynak/Not", placeholder="Link veya Galeri...")
+    e1_n = st.text_input("Emsal 1 Kaynak", placeholder="İlan Linki / Galeri...")
+    e2_n = st.text_input("Emsal 2 Kaynak", placeholder="İlan Linki / Galeri...")
+    e3_n = st.text_input("Emsal 3 Kaynak", placeholder="İlan Linki / Galeri...")
 
-# Dinamik Ortalama (Sadece girilen değerleri alır)
-fiyat_listesi = [f for f in [e1_f, e2_f, e3_f] if f > 0]
-rayic_ort = sum(fiyat_listesi) / len(fiyat_listesi) if fiyat_listesi else 0
-
-if rayic_ort > 0:
-    st.info(f"📊 **Tespit Edilen Ortalama Rayiç:** {rayic_ort:,.2f} TL (İncelenen Emsal Sayısı: {len(fiyat_listesi)})")
+# Rayiç Hesaplama
+fiyatlar = [f for f in [e1_f, e2_f, e3_f] if f > 0]
+rayic_ort = sum(fiyatlar) / len(fiyatlar) if fiyatlar else 0
+st.info(f"📍 **Tespit Edilen Ortalama Rayiç:** {rayic_ort:,.2f} TL")
 
 st.divider()
 
-# --- BÖLÜM 2: TEKNİK VERİLER VE ANALİZ ---
+# --- BÖLÜM 2: DAVA KONUSU ARAÇ ANALİZİ (MENÜLER) ---
 st.write("### 🚗 2. Dava Konusu Araç ve Hasar Analizi")
+
 c1, c2, c3 = st.columns(3)
 
 with c1:
-    arac_bilgi = st.text_input("Araç Tanımı", "2021 VW Passat")
-    yil = st.number_input("Model Yılı", 1990, 2026, 2021)
+    # Hiyerarşik Seçim
+    kat = st.selectbox("Araç Kategorisi", list(arac_yapisi.keys()))
+    marka = st.selectbox("Marka", list(arac_yapisi[kat].keys()))
+    model = st.selectbox("Model", arac_yapisi[kat][marka])
+
 with c2:
-    km = st.number_input("Aracın Kilometresi", 0, 1000000, 50000)
-    hasar_tipi = st.selectbox("Hasar Bölgesi Şiddeti", 
-                               options=[1.0, 1.25, 1.5], 
-                               format_func=lambda x: "Hafif (Plastik/Tampon)" if x==1.0 else ("Orta (Kaporta/Panel)" if x==1.25 else "Ağır (Şasi/İskelet)"))
+    # Liste Halinde Yıl ve KM
+    yil = st.selectbox("Model Yılı", list(range(2026, 1999, -1)))
+    km = st.number_input("Aracın Kilometresi", min_value=0, value=50000)
+    vites = st.selectbox("Şanzıman Tipi", ["Manuel", "Otomatik", "Yarı Otomatik"])
+
 with c3:
-    # Bilirkişi tarafından belirlenen temel kayıp oranı (Piyasa şartlarına göre)
-    baz_oran = st.number_input("Baz Kayıp Oranı (%)", 1, 50, 15) / 100
+    # Hasar Bölgesi ve Şiddeti
+    hasar_bolgesi = st.multiselect("Hasar Alanları", ["Ön Kısım", "Arka Kısım", "Yan Paneller", "Tavan", "İç İskelet/Şasi"])
+    hasar_siddeti = st.selectbox("Hasar Önem Derecesi", 
+                                 options=[1.0, 1.3, 1.6], 
+                                 format_func=lambda x: "Düşük (Plastik/Dış Parça)" if x==1.0 else ("Orta (Sac Aksam)" if x==1.3 else "Yüksek (Taşıyıcı İskelet)"))
 
-# --- BÖLÜM 3: HESAPLAMA VE İSPAT ---
-if st.button("ANALİZ RAPORUNU VE MATEMATİKSEL İSPATI OLUŞTUR"):
-    if len(fiyat_listesi) < 2:
-        st.error("Lütfen sağlıklı bir analiz için en az 2, tercihen 3 emsal fiyat giriniz.")
+st.divider()
+
+# --- BÖLÜM 3: HESAPLAMA VE ÇIKTI ---
+if st.button("ANALİZİ TAMAMLA VE TEKNİK RAPORU HAZIRLA"):
+    if len(fiyatlar) < 3:
+        st.error("Lütfen sağlıklı bir analiz için 3 emsal fiyatını da doldurunuz.")
     else:
-        # Teknik Katsayılar
-        yas_k = 1.0 if (2026-yil) <= 2 else (0.75 if (2026-yil) <= 6 else 0.45)
-        km_k = 1.0 if km <= 25000 else (0.65 if km <= 110000 else 0.35)
+        # Teknik Katsayılar (Matematiksel Model)
+        yas_k = 1.0 if (2026-yil) <= 2 else (0.7 if (2026-yil) <= 6 else 0.4)
+        km_k = 1.0 if km <= 25000 else (0.6 if km <= 110000 else 0.3)
+        baz_oran = 0.15 # %15 Baz Değer Kaybı Oranı
         
-        # Teknik Zarar Formülü
-        t_zarar = rayic_ort * baz_oran * yas_k * km_k * hasar_tipi
+        teknik_zarar = rayic_ort * baz_oran * yas_k * km_k * hasar_siddeti
 
-        # Analiz Sonuçları
+        # Sonuç Ekranı
         st.markdown("<div class='calc-box'>", unsafe_allow_html=True)
-        st.write("### 📈 Teknik Değer Kaybı Tespiti")
-        st.write(f"**Net Teknik Zarar:** {t_zarar:,.2f} TL")
-        st.caption("Bu rakam mahkemenin takdirinden önceki çıplak teknik zararı ifade eder.")
+        st.write("### 📊 Teknik Zarar Tespiti")
+        st.write(f"İncelenen **{yil} {marka} {model}** marka araçta tespit edilen çıplak teknik zarar:")
+        st.write(f"## {teknik_zarar:,.2f} TL")
+        st.latex(rf"DK = {rayic_ort:,.0f} \times {baz_oran} \times {yas_k} \times {km_k} \times {hasar_siddeti} = {teknik_zarar:,.2f} \text{{ TL}}")
         st.markdown("</div>", unsafe_allow_html=True)
 
-        # Matematiksel İspat Bölümü (Denetime Elverişlilik İçin)
-        st.write("#### 🔍 Matematiksel Formül Dökümü")
-        st.latex(rf"DK = {rayic_ort:,.0f} \times {baz_oran} \times {yas_k} \times {km_k} \times {hasar_tipi} = {t_zarar:,.2f} \text{{ TL}}")
-
-        # Mahkeme Hakkaniyet İndirimi Paneli
+        # Hakkaniyet İndirimi Paneli
         st.markdown("<div class='hakkaniyet-box'>", unsafe_allow_html=True)
-        st.write("### ⚖️ Olası Hakkaniyet İndirimleri (TBK 51/52)")
-        col_h1, col_h2, col_h3 = st.columns(3)
-        col_h1.metric("%10 İndirimli", f"{t_zarar*0.9:,.2f} TL")
-        col_h2.metric("%20 İndirimli", f"{t_zarar*0.8:,.2f} TL")
-        col_h3.metric("%30 İndirimli", f"{t_zarar*0.7:,.2f} TL")
+        st.write("### ⚖️ Mahkeme Hakkaniyet İndirimi (TBK 51/52)")
+        st.caption("Hakimin takdir edebileceği olası indirimli sonuçlar:")
+        h1, h2, h3 = st.columns(3)
+        h1.metric("%10 İndirim", f"{teknik_zarar*0.9:,.2f} TL")
+        h2.metric("%20 İndirim", f"{teknik_zarar*0.8:,.2f} TL")
+        h3.metric("%30 İndirim", f"{teknik_zarar*0.7:,.2f} TL")
         st.markdown("</div>", unsafe_allow_html=True)
 
-        # Hazır Rapor Metni
-        st.write("### 📝 Bilirkişi Sonuç Metni")
+        # Rapor Metni
+        st.write("### 📝 Bilirkişi Rapor Metni")
         rapor = f"""
-        Dosya konusu {arac_bilgi} plakalı aracın piyasa rayiç araştırmasında, ekte sunulan 3 adet emsalin ortalaması olan {rayic_ort:,.2f} TL baz alınmıştır.
+        Dosya konusu {yil} model {marka} {model} ({km:,} KM) plakalı aracın yapılan piyasa araştırmasında; 
+        ekte sunulan 3 adet emsal ilan ortalaması olan {rayic_ort:,.2f} TL baz alınmıştır.
         
-        Aracın yaşı, kilometresi ve hasar şiddeti ({hasar_tipi}) katsayıları ile yapılan matematiksel modelleme neticesinde; 
-        araçtaki TEKNİK DEĞER KAYBININ {t_zarar:,.2f} TL OLDUĞU TESPİT EDİLMİŞTİR.
+        Aracın teknik özellikleri, yaşı, kilometresi ve hasar aldığı bölgeler ({', '.join(hasar_bolgesi)}) 
+        birlikte değerlendirildiğinde; TEKNİK DEĞER KAYBININ {teknik_zarar:,.2f} TL OLDUĞU TESPİT EDİLMİŞTİR.
         
-        TBK m.51-52 uyarınca yapılacak takdiri indirimler Sayın Mahkemenin yetkisindedir.
+        Hakkaniyet indirimi takdiri Sayın Mahkemenizdedir.
         """
-        st.text_area("Raporu Kopyala", rapor, height=200)
+        st.text_area("Kopyala ve UYAP'a Yapıştır", rapor, height=200)
