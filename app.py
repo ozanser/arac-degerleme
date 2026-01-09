@@ -52,7 +52,7 @@ st.markdown("""
     .stMetric { background-color: #ffffff; padding: 15px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
     .stButton>button { width: 100%; border-radius: 5px; height: 3em; background-color: #004a99; color: white; }
     </style>
-    """, unsafe_allow_value=True)
+    """, unsafe_allow_html=True) # Parametre ismini 'unsafe_allow_html' yaptık
 
 # --- YAN PANEL (Parametreler) ---
 st.sidebar.image("https://cdn-icons-png.flaticon.com/512/3251/3251520.png", width=100)
