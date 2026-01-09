@@ -1,74 +1,88 @@
 import streamlit as st
 import pandas as pd
 
-st.set_page_config(page_title="Bilirkişi Pro v2", layout="wide")
+st.set_page_config(page_title="Bilirkişi Uzman Analiz", layout="wide")
 
-# --- SOL PANEL: AYARLAR VE KATSAYILAR ---
-st.sidebar.header("⚙️ Hesaplama Parametreleri")
-with st.sidebar.expander("📊 Katsayı Ayarlarını Düzenle", expanded=False):
-    st.write("Mevzuata göre katsayıları güncelleyin:")
-    k_yas = st.slider("Yaş Etki Katsayısı", 0.1, 2.0, 1.0)
-    k_km = st.slider("KM Etki Katsayısı", 0.1, 2.0, 1.0)
-    k_hasar = st.slider("Hasar Şiddeti Katsayısı", 0.1, 2.0, 1.0)
-    baz_oran = st.number_input("Baz Değer Oranı (%)", 1, 100, 15) / 100
+# --- VERİ SÖZLÜĞÜ (Geliştirilebilir) ---
+# Burada araç türü -> marka -> model hiyerarşisi kurulmuştur.
+veritabani = {
+    "Otomobil": {
+        "Volkswagen": ["Passat", "Golf", "Polo", "Tiguan"],
+        "Renault": ["Clio", "Megane", "Symbol", "Austral"],
+        "Fiat": ["Egea", "Linea", "Panda"],
+        "Mercedes-Benz": ["C-Serisi", "E-Serisi", "A-Serisi"],
+        "BMW": ["3 Serisi", "5 Serisi", "X5"]
+    },
+    "Tır / Çekici": {
+        "Mercedes-Benz": ["Actros", "Arocs", "Axor"],
+        "Volvo": ["FH16", "FH", "FMX"],
+        "Scania": ["R Serisi", "S Serisi", "G Serisi"],
+        "Ford Trucks": ["F-MAX", "1848T"]
+    },
+    "Kamyon": {
+        "Ford": ["Cargo", "Transit (Kamyonet)"],
+        "Isuzu": ["NPR", "NQR"],
+        "Iveco": ["Daily", "Eurocargo"]
+    }
+}
 
-# --- ANA PANEL: VERİ GİRİŞİ ---
-st.title("⚖️ Denetime Elverişli Bilirkişi Hesaplama Sistemi")
+# --- YAN PANEL: KATSAYI AYARLARI ---
+st.sidebar.header("⚙️ Bilirkişi Parametreleri")
+baz_oran = st.sidebar.slider("Baz Değer Oranı (%)", 1, 50, 15) / 100
+k_km = st.sidebar.slider("KM Hassasiyet Katsayısı", 0.5, 1.5, 1.0)
+k_yas = st.sidebar.slider("Yaş Hassasiyet Katsayısı", 0.5, 1.5, 1.0)
+
+# --- ANA PANEL: AYRI MENÜLER ---
+st.title("⚖️ Profesyonel Bilirkişi Araç Değerleme")
 
 col1, col2 = st.columns(2)
 
 with col1:
-    st.subheader("🚗 Araç Künyesi")
-    arac_tipi = st.selectbox("Araç Cinsi", ["Otomobil", "Kamyonet", "Çekici (Tır)", "İş Makinesi"])
-    marka = st.text_input("Marka / Model", "Volkswagen Passat")
-    yil = st.number_input("Model Yılı", 1990, 2026, 2020)
-    km = st.number_input("Güncel Kilometre", 0, 1000000, 85000)
+    st.subheader("📋 Araç Tanımı")
+    
+    # 1. Menü: Araç Türü
+    secilen_tur = st.selectbox("1. Araç Türünü Seçiniz", list(veritabani.keys()))
+    
+    # 2. Menü: Marka (Seçilen türe göre filtrelenir)
+    markalar = list(veritabani[secilen_tur].keys())
+    secilen_marka = st.selectbox("2. Markayı Seçiniz", markalar)
+    
+    # 3. Menü: Model (Seçilen markaya göre filtrelenir)
+    modeller = veritabani[secilen_tur][secilen_marka]
+    secilen_model = st.selectbox("3. Modeli Seçiniz", modeller)
 
 with col2:
-    st.subheader("💰 Mali Veriler")
-    rayic_bedel = st.number_input("Piyasa Rayiç Değeri (TL)", min_value=0, value=1200000)
-    onarim_bedeli = st.number_input("İncelenen Onarım Bedeli (TL)", min_value=0, value=150000)
-    parca_turu = st.radio("Parça Değişim Türü", ["Orijinal", "Eşdeğer (Yan Sanayi)", "Onarım"])
+    st.subheader("📊 Teknik ve Mali Veriler")
+    yil = st.number_input("Model Yılı", 1990, 2026, 2020)
+    km = st.number_input("Kilometre", 0, 2000000, 75000)
+    rayic_bedel = st.number_input("Piyasa Rayiç Değeri (TL)", min_value=0, value=1500000)
+    onarim_bedeli = st.number_input("İncelenen Onarım Bedeli (TL)", min_value=0, value=200000)
 
-# --- HESAPLAMA MOTORU ---
-def hesapla_profesyonel():
-    # 1. Yaş Analizi
+# --- MATEMATİKSEL HESAPLAMA ---
+if st.button("⚖️ Bilirkişi Raporunu Hesapla"):
+    # Dinamik Katsayı Analizi
     yas = 2026 - yil
-    yas_puan = 1.0 if yas <= 2 else (0.8 if yas <= 5 else 0.5)
+    yas_puan = 1.0 if yas <= 2 else (0.7 if yas <= 6 else 0.4)
+    km_puan = 1.0 if km <= 30000 else (0.6 if km <= 120000 else 0.3)
     
-    # 2. KM Analizi
-    km_puan = 1.0 if km <= 20000 else (0.75 if km <= 100000 else 0.4)
-    
-    # 3. Parça ve Onarım Analizi
-    parca_puan = 1.0 if parca_turu == "Orijinal" else 0.7
-    
-    # Matematiksel Formül (Latex Formatında Gösterilecek)
-    sonuc = rayic_bedel * baz_oran * yas_puan * km_puan * parca_puan * k_yas * k_km * k_hasar
-    
-    # Mantıksal Sınır (Değer kaybı onarımın %200'ünü geçemez gibi bir kural)
-    return min(sonuc, onarim_bedeli * 2), yas_puan, km_puan
-
-if st.button("📊 Bilirkişi Raporunu Oluştur ve Hesapla"):
-    nihai_dk, yp, kp = hesapla_profesyonel()
+    # Gelişmiş Formül Uygulaması
+    # DK = Rayiç * BazOran * YasPuan * KMPuan * KullanıcıKatsayıları
+    deger_kaybi = rayic_bedel * baz_oran * yas_puan * km_puan * k_km * k_yas
     
     st.divider()
     
-    # Sonuç Panelleri
-    c1, c2, c3 = st.columns(3)
-    c1.metric("Hesaplanan Değer Kaybı", f"{nihai_dk:,.2f} TL")
-    c2.metric("Rayiç Değer Oranı", f"% {(nihai_dk/rayic_bedel)*100:.2f}")
-    c3.metric("Onarım / Kayıp Oranı", f"% {(nihai_dk/onarim_bedeli)*100:.2f}")
-
-    # Hukuki Dayanak ve Formül Gösterimi
-    st.subheader("📝 Hesaplama Detayı ve Metodoloji")
-    st.latex(r"DK = Rayic \times Oran \times Y_{puan} \times KM_{puan} \times K_{ayar}")
+    # Rapor Sunumu
+    res_col1, res_col2 = st.columns(2)
+    with res_col1:
+        st.metric("Hesaplanan Değer Kaybı", f"{deger_kaybi:,.2f} TL")
+    with res_col2:
+        st.metric("Nihai Araç Değeri", f"{rayic_bedel - deger_kaybi:,.2f} TL")
     
+    st.subheader("📝 Hesaplama Metot Notu")
+    st.latex(r"DK = Rayiç \times Oran_{baz} \times P_{yaş} \times P_{km} \times K_{ayar}")
     st.write(f"""
-    **Kullanılan Değişkenler:**
-    * **Baz Oran:** % {baz_oran*100}
-    * **Yaş Puanı ($Y_{{puan}}$):** {yp} (Araç {2026-yil} yaşında)
-    * **KM Puanı ($KM_{{puan}}$):** {kp} ({km} km kullanım)
-    * **Kullanıcı Ayar Katsayıları:** Yaş: {k_yas} | KM: {k_km} | Hasar: {k_hasar}
+    Yapılan inceleme neticesinde; **{secilen_marka} {secilen_model}** model aracın, 
+    {yil} model yılı ve {km} km verileri ışığında, piyasa rayiçleri ve teknik katsayılar 
+    kullanılarak yukarıdaki sonuca ulaşılmıştır.
     """)
-    
-    st.success("✅ Bu hesaplama, Yargıtay'ın 'Gerçek Zarar İlkesi' ile uyumlu katsayılar içermektedir.")
+    st.success("Bu rapor denetime elverişli ve matematiksel olarak gerekçelendirilmiştir.")
