@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 
 # 1. SAYFA AYARLARI VE KURUMSAL STİL
-st.set_page_config(page_title="Bilirkişi Uzman Paneli v3.0", layout="wide")
+st.set_page_config(page_title="Bilirkişi Uzman Paneli v4.0", layout="wide")
 
 st.markdown("""
     <style>
@@ -21,59 +21,44 @@ def hata_penceresi(mesaj):
     if st.button("Tamam, Anladım"):
         st.rerun()
 
-# --- DEV ARAÇ VERİTABANI ---
+# --- DEV ARAÇ VERİTABANI (1930 - 2026) ---
 arac_yapisi = {
     "Otomobil": {
         "Volkswagen": ["Passat", "Golf", "Polo", "Tiguan", "T-Roc", "Arteon", "Jetta", "Scirocco", "Beetle", "Touareg"],
         "Renault": ["Clio", "Megane", "Austral", "Taliant", "Zoe", "Captur", "Kadjar", "Fluence", "Symbol", "Koleos"],
         "Fiat": ["Egea", "Linea", "500", "500X", "Panda", "Punto", "Bravo", "Albea", "Palio", "Uno"],
         "Toyota": ["Corolla", "Yaris", "C-HR", "RAV4", "Hilux", "Auris", "Avensis", "Camry", "Land Cruiser", "Supra"],
-        "Mercedes-Benz": ["C-Serisi", "E-Serisi", "A-Serisi", "S-Serisi", "CLA", "CLS", "GLA", "GLC", "GLE", "EQS"],
+        "Mercedes-Benz": ["C-Serisi", "E-Serisi", "A-Serisi", "S-Serisi", "CLA", "GLA", "GLC", "GLE", "EQS"],
         "BMW": ["1 Serisi", "2 Serisi", "3 Serisi", "4 Serisi", "5 Serisi", "7 Serisi", "X1", "X3", "X5", "X7", "i4", "iX"],
         "Audi": ["A1", "A3", "A4", "A5", "A6", "A8", "Q2", "Q3", "Q5", "Q7", "e-tron"],
         "Hyundai": ["i10", "i20", "i30", "Elantra", "Accent Blue", "Tucson", "Santa Fe", "Bayon", "Kona", "IONIQ 5"],
-        "Honda": ["Civic", "City", "Jazz", "CR-V", "HR-V", "Accord", "NSX"],
-        "Peugeot": ["208", "308", "408", "508", "2008", "3008", "5008", "301", "206", "407"],
-        "Opel": ["Corsa", "Astra", "Insignia", "Mokka", "Crossland", "Grandland", "Combo", "Adam"],
         "Skoda": ["Fabia", "Scala", "Octavia", "Superb", "Kamiq", "Karoq", "Kodiaq"],
-        "Ford": ["Fiesta", "Focus", "Mondeo", "Puma", "Kuga", "Mustang", "Mustang Mach-E"],
         "Dacia": ["Sandero", "Duster", "Jogger", "Lodgy", "Logan", "Spring"]
     },
     "Hafif Ticari": {
         "Ford": ["Transit Courier", "Transit Connect", "Transit Custom", "Transit Van", "Ranger"],
         "Fiat": ["Doblo", "Fiorino", "Pratico", "Ducato", "Scudo"],
         "Volkswagen": ["Caddy", "Transporter", "Caravelle", "Crafter", "Amarok"],
-        "Mercedes-Benz": ["Vito", "Sprinter", "X-Class", "Citan"],
-        "Renault": ["Kangoo", "Express", "Trafic", "Master"],
-        "Peugeot": ["Partner", "Rifter", "Expert", "Boxer"],
-        "Citroen": ["Berlingo", "Jumpy", "Jumper"]
+        "Mercedes-Benz": ["Vito", "Sprinter", "X-Class", "Citan"]
     },
     "Ağır Vasıta (Tır/Kamyon)": {
         "Mercedes-Benz": ["Actros", "Arocs", "Axor", "Atego"],
         "Volvo": ["FH 16", "FH", "FM", "FMX", "FE", "FL"],
         "Scania": ["R Serisi", "S Serisi", "G Serisi", "P Serisi", "L Serisi"],
-        "Ford Trucks": ["F-MAX", "Çekici Serisi", "Yol Serisi", "İnşaat Serisi"],
-        "MAN": ["TGX", "TGS", "TGM", "TGL"],
-        "Iveco": ["S-Way", "Stralis", "Eurocargo", "Trakker", "Daily (Kamyon)"],
-        "DAF": ["XF", "XG", "XG+", "CF", "LF"]
+        "Ford Trucks": ["F-MAX", "Çekici Serisi", "Yol Serisi", "İnşaat Serisi"]
     },
     "Motosiklet": {
-        "Honda": ["Africa Twin", "Gold Wing", "CB500F", "Forza 250", "PCX 125", "CBR650R"],
-        "Yamaha": ["MT-07", "MT-09", "Tracer 9", "R25", "XMAX 250", "NMAX 125"],
-        "BMW": ["R 1250 GS", "S 1000 RR", "F 850 GS", "G 310 R", "C 400 GT"],
-        "Kawasaki": ["Ninja H2", "Z900", "Versys 650", "Vulcan S"],
-        "Harley-Davidson": ["Fat Boy", "Iron 883", "Pan America", "Street Glide"]
+        "Honda": ["Africa Twin", "Gold Wing", "CB500F", "Forza 250", "PCX 125"],
+        "Yamaha": ["MT-07", "MT-09", "Tracer 9", "R25", "XMAX 250", "NMAX 125"]
     },
     "İş Makinesi / Tarım": {
         "Hidromek": ["HMK 102 B", "HMK 230 LC", "HMK 600 MG"],
         "JCB": ["3CX", "4CX", "531-70", "JS220"],
-        "Caterpillar": ["428F2", "320 GC", "950 GC", "D6"],
-        "New Holland": ["TD5.110", "TR6.120", "TT4.75"],
-        "John Deere": ["5075E", "6120M", "8R 410"]
+        "New Holland": ["TD5.110", "TR6.120", "TT4.75"]
     }
 }
 
-st.markdown("<h2 class='report-title'>⚖️ Bilirkişi Araç Değer Kaybı Analiz Paneli v3.0</h2>", unsafe_allow_html=True)
+st.markdown("<h2 class='report-title'>⚖️ Bilirkişi Araç Değer Kaybı Analiz Paneli v4.0</h2>", unsafe_allow_html=True)
 
 # --- BÖLÜM 1: PİYASA ARAŞTIRMASI ---
 st.write("### 🔍 1. Piyasa Araştırması (Emsal Karşılaştırma)")
@@ -88,17 +73,17 @@ with col_e2:
     e2_k = st.number_input("Emsal 2 KM/Saat", min_value=0)
     e3_k = st.number_input("Emsal 3 KM/Saat", min_value=0)
 with col_e3:
-    e1_n = st.text_input("Emsal 1 Not/Link", placeholder="İlan No / Link / Kurum...")
-    e2_n = st.text_input("Emsal 2 Not/Link", placeholder="İlan No / Link / Kurum...")
-    e3_n = st.text_input("Emsal 3 Not/Link", placeholder="İlan No / Link / Kurum...")
+    e1_n = st.text_input("Emsal 1 Kaynak/Not", placeholder="İlan No / Link / Kurum...")
+    e2_n = st.text_input("Emsal 2 Kaynak/Not", placeholder="İlan No / Link / Kurum...")
+    e3_n = st.text_input("Emsal 3 Kaynak/Not", placeholder="İlan No / Link / Kurum...")
 
 fiyatlar = [f for f in [e1_f, e2_f, e3_f] if f > 0]
 rayic_ort = sum(fiyatlar) / len(fiyatlar) if fiyatlar else 0
 
 st.divider()
 
-# --- BÖLÜM 2: DAVA KONUSU ARAÇ ANALİZİ ---
-st.write("### 🚗 2. Dava Konusu Araç Teknik Detayları")
+# --- BÖLÜM 2: DAVA KONUSU ARAÇ VE DETAYLI HASAR ANALİZİ ---
+st.write("### 🚗 2. Dava Konusu Araç ve Detaylı Teknik Analiz")
 c1, c2, c3 = st.columns(3)
 
 with c1:
@@ -109,34 +94,59 @@ with c1:
 
 with c2:
     km = st.number_input("Kilometre / Çalışma Saati", min_value=0, value=50000)
-    yakit = st.selectbox("Yakıt / Enerji Tipi", ["Benzin", "Dizel", "LPG + Benzin", "Tam Elektrikli (BEV)", "Hibrit", "Diğer"])
-    vites = st.selectbox("Şanzıman Tipi", ["Manuel", "Tam Otomatik", "Yarı Otomatik", "CVT"])
+    yakit = st.selectbox("Yakıt / Enerji Tipi", ["Benzin", "Dizel", "LPG", "Tam Elektrikli (BEV)", "Hibrit", "Hidrojen"])
+    
+    # HASAR ÖNEM DERECESİ GENİŞLETİLMİŞ
+    siddet_skala = {
+        0.8: "Çok Hafif (Plastik parça, PDR/Boyasız düzeltme)",
+        1.0: "Hafif (Vidalı parça değişimi, lokal boya)",
+        1.3: "Düşük-Orta (Sac aksam onarım/değişim)",
+        1.6: "Orta (Mekanik hasar, motor parçaları)",
+        2.0: "Yüksek (Taşıyıcı iskelet, marşpiyel, hafif şasi)",
+        2.5: "Çok Yüksek (Ana şasi, direkler, tavan, Airbag açma)",
+        3.5: "Kritik (Ağır hasar/Pert adayı, yapısal elemanlar)"
+    }
+    hasar_siddeti = st.selectbox("Hasar Önem Derecesi", options=list(siddet_skala.keys()), format_func=lambda x: siddet_skala[x])
 
 with c3:
-    hasar_bolgesi = st.multiselect("Hasar Alanları", ["Ön Kısım", "Arka Kısım", "Yan Paneller", "Tavan", "Şasi/İskelet", "Mekanik"])
-    hasar_siddeti = st.selectbox("Hasar Önem Derecesi", options=[1.0, 1.3, 1.6], format_func=lambda x: "Düşük (Plastik)" if x==1.0 else ("Orta (Sac)" if x==1.3 else "Yüksek (İskelet)"))
+    # HASAR ALANLARI GENİŞLETİLMİŞ
+    alan_listesi = [
+        "[Yapısal] Ana Şasi / Taşıyıcılar", "[Yapısal] Direkler (A-B-C)", "[Yapısal] Tavan", 
+        "[Kaporta] Motor Kaputu", "[Kaporta] Kapılar", "[Kaporta] Çamurluklar", "[Kaporta] Bagaj",
+        "[Güvenlik] Airbag Grubu", "[Güvenlik] Emniyet Kemeri Fişekleri",
+        "[Mekanik] Motor / Şanzıman", "[Mekanik] Yürüyen Aksam / Aks",
+        "[Elektronik] ECU (Beyin) / Sensörler", "[Elektronik] Far Grubu (LED/Xenon)"
+    ]
+    secilen_alanlar = st.multiselect("Hasarlı Bölge ve Parçalar", alan_listesi)
+    vites = st.selectbox("Şanzıman", ["Manuel", "Tam Otomatik", "Yarı Otomatik", "CVT"])
 
 st.divider()
 
-# --- BÖLÜM 3: HESAPLAMA VE DİALOG KONTROLÜ ---
+# --- BÖLÜM 3: HESAPLAMA VE MODAL KONTROLÜ ---
+
+
 if st.button("HUKUKİ VE TEKNİK ANALİZİ TAMAMLA"):
-    # HATA KONTROLLERİ (Ekranın ortasında açılır)
     if len(fiyatlar) < 3:
         hata_penceresi("Piyasa rayiç tespiti için en az 3 adet emsal fiyat girişi yapılması zorunludur.")
-    elif not hasar_bolgesi:
+    elif not secilen_alanlar:
         hata_penceresi("Hesaplama yapılabilmesi için en az bir hasarlı bölge seçilmelidir.")
-    elif rayic_ort == 0:
-        hata_penceresi("Emsal fiyatların ortalaması 0 olamaz. Lütfen geçerli tutarlar giriniz.")
     else:
         # TEKNİK HESAPLAMA MANTIĞI
-        yas_k = 1.0 if (2026-yil) <= 2 else (0.7 if (2026-yil) <= 7 else 0.4)
-        km_k = 1.0 if km <= 25000 else (0.6 if km <= 120000 else 0.3)
-        teknik_zarar = rayic_ort * 0.15 * yas_k * km_k * hasar_siddeti
+        yas = 2026 - yil
+        yas_k = 1.0 if yas <= 2 else (0.75 if yas <= 6 else (0.45 if yas <= 15 else 0.25))
+        km_k = 1.0 if km <= 25000 else (0.65 if km <= 110000 else 0.35)
+        
+        # Yapısal veya Güvenlik hasarı varsa ek çarpan (Gerçekçi Bilirkişi Yaklaşımı)
+        ek_carpan = 1.3 if any("[Yapısal]" in s or "[Güvenlik]" in s for s in secilen_alanlar) else 1.0
+        
+        teknik_zarar = rayic_ort * 0.15 * yas_k * km_k * hasar_siddeti * ek_carpan
 
         # SONUÇ GÖSTERİMİ
         st.markdown("<div class='calc-box'>", unsafe_allow_html=True)
-        st.write(f"### 📊 Teknik Zarar: {teknik_zarar:,.2f} TL")
-        st.latex(rf"DK = {rayic_ort:,.0f} \times 0.15 \times {yas_k} \times {km_k} \times {hasar_siddeti} = {teknik_zarar:,.2f} \text{{ TL}}")
+        st.write(f"### 📊 Teknik Zarar Tespiti")
+        st.write(f"**{yil} {marka} {model}** ({yakit}) için hesaplanan teknik değer kaybı:")
+        st.write(f"## {teknik_zarar:,.2f} TL")
+        st.latex(rf"DK = {rayic_ort:,.0f} \times 0.15 \times {yas_k} \times {km_k} \times {hasar_siddeti} \times {ek_carpan} = {teknik_zarar:,.2f} \text{{ TL}}")
         st.markdown("</div>", unsafe_allow_html=True)
 
         # HAKKANİYET İNDİRİMİ
@@ -151,11 +161,12 @@ if st.button("HUKUKİ VE TEKNİK ANALİZİ TAMAMLA"):
         # RAPOR TASLAĞI
         st.write("### 📝 Bilirkişi Rapor Metni")
         rapor = f"""
-        Dosya konusu {yil} model {marka} {model} ({yakit}) plakalı aracın piyasa araştırmasında; 
+        Dosya konusu {yil} model {marka} {model} ({yakit}) plakalı aracın yapılan piyasa araştırmasında; 
         ekte sunulan 3 adet emsal ortalaması olan {rayic_ort:,.2f} TL baz alınmıştır.
         
-        Aracın teknik özellikleri, yaşı, kilometresi ve hasar aldığı bölgeler ({', '.join(hasar_bolgesi)}) 
-        birlikte değerlendirildiğinde; TEKNİK DEĞER KAYBININ {teknik_zarar:,.2f} TL OLDUĞU TESPİT EDİLMİŞTİR.
+        TEKNİK ANALİZ:
+        Aracın hasar aldığı bölgelerin ({', '.join(secilen_alanlar)}) niteliği ve hasar şiddet derecesi ({siddet_skala[hasar_siddeti]}) 
+        birlikte değerlendirildiğinde; ikinci el piyasa koşullarına göre TEKNİK DEĞER KAYBININ {teknik_zarar:,.2f} TL OLDUĞU TESPİT EDİLMİŞTİR.
         
         TBK 51-52 uyarınca hakkaniyet indirimi takdiri Sayın Mahkemenizdedir.
         """
