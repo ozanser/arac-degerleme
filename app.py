@@ -2,147 +2,192 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime
 
-# Sayfa Yapılandırması
-st.set_page_config(page_title="Bilirkişi AI - Araç Değerleme", layout="wide", initial_sidebar_state="expanded")
+# 1. Sayfa Konfigürasyonu (Geniş ve Modern)
+st.set_page_config(
+    page_title="Bilirkişi Pro | Araç Değerleme",
+    page_icon="⚖️",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
 
-# --- GENİŞLETİLMİŞ ARAÇ VERİTABANI ---
+# 2. Gelişmiş Kurumsal CSS Tasarımı
+st.markdown("""
+    <style>
+    /* Ana Arkaplan */
+    .stApp {
+        background-color: #f4f7f9;
+    }
+    
+    /* Sol Menü (Sidebar) Tasarımı */
+    [data-testid="stSidebar"] {
+        background-color: #002b45 !important;
+        color: white;
+    }
+    [data-testid="stSidebar"] .stMarkdown p {
+        color: #d1dce5;
+    }
+
+    /* Başlık ve Kart Tasarımları */
+    h1 {
+        color: #002b45;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        font-weight: 700;
+        border-bottom: 2px solid #002b45;
+        padding-bottom: 10px;
+    }
+
+    .stMetric {
+        background-color: #ffffff;
+        border-radius: 12px;
+        padding: 20px !important;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        border-left: 5px solid #005a9c;
+    }
+
+    /* Tab Menü Tasarımı */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 10px;
+        background-color: transparent;
+    }
+    .stTabs [data-baseweb="tab"] {
+        height: 50px;
+        background-color: #ffffff;
+        border-radius: 8px 8px 0px 0px;
+        padding: 10px 20px;
+        border: 1px solid #e1e4e8;
+    }
+    .stTabs [aria-selected="true"] {
+        background-color: #005a9c !important;
+        color: white !important;
+        font-weight: bold;
+    }
+
+    /* Buton Tasarımı */
+    div.stButton > button:first-child {
+        background-color: #005a9c;
+        color: white;
+        border-radius: 8px;
+        height: 3.5em;
+        width: 100%;
+        font-weight: bold;
+        border: none;
+        transition: 0.3s;
+    }
+    div.stButton > button:first-child:hover {
+        background-color: #003d6b;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    
+    /* Input Alanları Gölgeleme */
+    .stTextInput>div>div>input, .stSelectbox>div>div>div {
+        border-radius: 8px !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+# --- VERİTABANI --- (Kısaltılmış örnek, önceki sürümdeki geniş listeyi buraya ekleyebilirsiniz)
 arac_db = {
     "Otomobil": {
-        "Volkswagen": ["Passat", "Golf", "Polo", "Tiguan", "T-Roc", "Arteon", "Jetta"],
-        "Renault": ["Clio", "Megane", "Symbol", "Fluence", "Austral", "Taliant", "Kadjar"],
-        "Fiat": ["Egea", "Linea", "Panda", "500", "Punto"],
-        "Ford": ["Focus", "Fiesta", "Mondeo", "Puma", "Kuga"],
-        "Toyota": ["Corolla", "Yaris", "Auris", "C-HR", "RAV4"],
-        "Mercedes-Benz": ["C-Serisi", "E-Serisi", "A-Serisi", "CLA", "GLA", "S-Serisi"],
-        "BMW": ["1 Serisi", "2 Serisi", "3 Serisi", "4 Serisi", "5 Serisi", "X1", "X3", "X5"],
-        "Audi": ["A3", "A4", "A5", "A6", "Q2", "Q3", "Q5"],
-        "Hyundai": ["i10", "i20", "i30", "Accent Blue", "Elantra", "Tucson", "Bayon"],
-        "Honda": ["Civic", "City", "Jazz", "CR-V", "HR-V"],
-        "Peugeot": ["208", "301", "308", "2008", "3008", "5008"],
-        "Opel": ["Astra", "Corsa", "Insignia", "Mokka", "Crossland", "Grandland"],
-        "Skoda": ["Octavia", "Superb", "Fabia", "Kamiq", "Karoq", "Kodiaq"],
-        "Dacia": ["Duster", "Sandero", "Jogger", "Lodgy"],
-        "Volvo": ["S60", "S90", "XC40", "XC60", "XC90"],
-        "Nissan": ["Qashqai", "Micra", "Juke", "X-Trail"]
+        "Volkswagen": ["Passat", "Golf", "Polo", "Tiguan"],
+        "Mercedes-Benz": ["C-Serisi", "E-Serisi", "A-Serisi"],
+        "Renault": ["Clio", "Megane", "Austral"],
+        "Fiat": ["Egea", "Linea", "Doblo"]
     },
-    "Hafif Ticari": {
-        "Ford": ["Transit", "Transit Courier", "Transit Connect", "Ranger"],
-        "Fiat": ["Doblo", "Fiorino", "Pratico", "Ducato"],
-        "Volkswagen": ["Caddy", "Transporter", "Crafter", "Amarok"],
-        "Renault": ["Kangoo", "Trafic", "Master"],
-        "Mercedes-Benz": ["Vito", "Sprinter"],
-        "Peugeot": ["Partner", "Rifter", "Expert"],
-        "Citroen": ["Berlingo", "Jumpy"]
-    },
-    "Ağır Vasıta (Tır/Kamyon)": {
-        "Mercedes-Benz": ["Actros", "Arocs", "Axor", "Atego"],
-        "Volvo": ["FH 16", "FH", "FM", "FMX"],
-        "Scania": ["R 450", "G 400", "S 500", "P Serisi"],
-        "Ford Trucks": ["F-MAX", "1848T", "2533", "3542"],
-        "MAN": ["TGX", "TGS", "TGL"],
-        "Iveco": ["S-Way", "Stralis", "Eurocargo", "Daily (Kamyon)"],
-        "DAF": ["XF 480", "XG", "CF"]
+    "Tır / Çekici": {
+        "Scania": ["R 450", "S 500"],
+        "Volvo": ["FH 16", "FM"],
+        "Mercedes-Benz": ["Actros"]
     }
 }
 
-# --- CUSTOM CSS (Görsel İyileştirme) ---
-st.markdown("""
-    <style>
-    .main { background-color: #f8f9fa; }
-    .stMetric { background-color: #ffffff; padding: 15px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-    .stButton>button { width: 100%; border-radius: 5px; height: 3em; background-color: #004a99; color: white; }
-    </style>
-    """, unsafe_allow_html=True) # Parametre ismini 'unsafe_allow_html' yaptık
-
-# --- YAN PANEL (Parametreler) ---
-st.sidebar.image("https://cdn-icons-png.flaticon.com/512/3251/3251520.png", width=100)
-st.sidebar.title("Bilirkişi Ayarları")
-
-with st.sidebar.expander("⚖️ Hesaplama Katsayıları", expanded=False):
-    k_yas = st.slider("Yaş Hassasiyeti", 0.5, 1.5, 1.0)
-    k_km = st.slider("KM Hassasiyeti", 0.5, 1.5, 1.0)
-    baz_oran = st.number_input("Baz Zarar Oranı (%)", 1, 50, 12) / 100
-
-st.sidebar.info("Bu araç, Yargıtay uygulamaları ve sigorta mevzuatına uygun şekilde matematiksel modelleme yapar.")
+# --- YAN PANEL ---
+with st.sidebar:
+    st.markdown("### 🏛️ Bilirkişi Paneli")
+    st.divider()
+    baz_oran = st.slider("Baz Değer Oranı (%)", 5, 25, 12) / 100
+    k_yas = st.select_slider("Yaş Hassasiyeti", options=[0.8, 1.0, 1.2], value=1.0)
+    k_km = st.select_slider("KM Hassasiyeti", options=[0.8, 1.0, 1.2], value=1.0)
+    st.divider()
+    st.caption("v2.1.0 - Kurumsal Bilirkişi Yazılımı")
 
 # --- ANA EKRAN ---
-st.title("⚖️ Araç Değer Kaybı ve Rayiç Tespit Sistemi")
-st.markdown("Mahkeme ve Sigorta Bilirkişileri için Hazırlanmış Profesyonel Analiz Paneli")
+st.title("⚖️ Araç Değer Kaybı Analiz Sistemi")
 
-tab1, tab2, tab3 = st.tabs(["📋 Veri Girişi", "📊 Analiz ve Sonuç", "📄 Resmi Rapor Taslağı"])
+# Bölümleme: Üst kısımda özet bilgiler
+tab_input, tab_analysis, tab_report = st.tabs(["📝 Veri Girişi", "📈 Teknik Analiz", "📄 Resmi Rapor"])
 
-with tab1:
-    c1, c2 = st.columns(2)
+with tab_input:
+    st.markdown("#### 1. Araç Künyesi ve Piyasa Verileri")
+    c1, c2, c3 = st.columns(3)
     
     with c1:
-        st.subheader("🚗 Araç Bilgileri")
         tip = st.selectbox("Araç Kategorisi", list(arac_db.keys()))
         marka = st.selectbox("Marka", list(arac_db[tip].keys()))
         model = st.selectbox("Model", arac_db[tip][marka])
-        yil = st.number_input("Model Yılı", 1990, 2026, 2021)
-        km = st.number_input("Kilometre", 0, 2000000, 45000)
-        renk = st.text_input("Renk", "Beyaz")
-
     with c2:
-        st.subheader("💰 Hasar ve Piyasa")
-        rayic = st.number_input("Piyasa Rayiç Değeri (TL)", 0, 50000000, 1450000)
-        hasar_bedeli = st.number_input("Onarım (Parça+İşçilik) Bedeli (TL)", 0, 5000000, 120000)
-        hasar_bolgesi = st.multiselect("Hasar Alanları", ["Ön Tampon/Panel", "Motor Kaputu", "Şasiler", "Direkler", "Yan Paneller", "Arka Kısım", "Mekanik Aksam"])
-        tramer_toplam = st.number_input("Geçmiş Tramer Toplamı (TL)", 0, 5000000, 0)
+        yil = st.number_input("Model Yılı", 2000, 2026, 2021)
+        km = st.number_input("Kilometre", 0, 1000000, 45000)
+        renk = st.text_input("Araç Rengi", "Beyaz")
+    with c3:
+        rayic = st.number_input("Piyasa Rayiç Değeri (TL)", 0, 50000000, 1250000)
+        hasar_bedeli = st.number_input("İncelenen Onarım Bedeli (TL)", 0, 5000000, 85000)
+        hasar_bolgesi = st.multiselect("Hasarlı Bölgeler", ["Ön Panel", "Kaput", "Şasiler", "Tavan", "Arka Panel"])
 
-with tab2:
-    # Hesaplama Motoru
-    yas = datetime.now().year - yil
-    
-    # Katsayı Mantığı
-    yas_puan = 1.2 if yas <= 1 else (1.0 if yas <= 3 else (0.7 if yas <= 7 else 0.4))
-    km_puan = 1.1 if km <= 15000 else (1.0 if km <= 50000 else (0.6 if km <= 150000 else 0.2))
-    hasar_etkisi = 1.3 if any(x in hasar_bolgesi for x in ["Şasiler", "Direkler"]) else 1.0
-    
-    deger_kaybi = rayic * baz_oran * yas_puan * km_puan * hasar_etkisi * k_yas * k_km
-    
-    # Görsel Kartlar
-    res_c1, res_c2, res_c3 = st.columns(3)
-    res_c1.metric("Hesaplanan Değer Kaybı", f"{deger_kaybi:,.2f} TL", delta="-Zarar")
-    res_c2.metric("İkinci El Satış Değeri", f"{rayic - deger_kaybi:,.2f} TL")
-    res_c3.metric("Hasar/Rayiç Oranı", f"% {(hasar_bedeli/rayic)*100:.1f}")
-    
     st.divider()
-    st.subheader("📈 Analiz Grafiği")
-    grafik_data = pd.DataFrame({
-        "Durum": ["Hasarsız Rayiç", "Hasar Sonrası Değer"],
-        "Tutar (TL)": [rayic, rayic - deger_kaybi]
-    })
-    st.bar_chart(grafik_data.set_index("Durum"))
+    calculate = st.button("📊 HESAPLAMAYI GERÇEKLEŞTİR")
 
-with tab3:
-    st.subheader("📝 Bilirkişi Rapor Özeti (Taslak)")
-    rapor_metni = f"""
-    SAYIN HAKİMLİĞİNE / İLGİLİ MAKAMA
+if calculate:
+    # --- MATEMATİKSEL MOTOR ---
+    yas = 2026 - yil
+    yas_puan = 1.2 if yas <= 1 else (1.0 if yas <= 4 else 0.7)
+    km_puan = 1.1 if km <= 20000 else (1.0 if km <= 60000 else 0.5)
     
-    KONU: {marka} {model} ({yil}) plakalı aracın değer kaybı tespiti.
+    # Şasi/Tavan gibi kritik yerlerde katsayı artar
+    hasar_katsayi = 1.4 if any(x in hasar_bolgesi for x in ["Şasiler", "Tavan"]) else 1.0
     
-    ARAÇ BİLGİLERİ:
-    - Marka/Model: {marka} {model}
-    - Model Yılı: {yil} ({yas} yaşında)
-    - Kilometre: {km:,} KM
-    - Hasar Geçmişi: {tramer_toplam:,} TL Tramer
-    
-    TEKNİK ANALİZ:
-    Yapılan incelemeler ve piyasa araştırmaları neticesinde aracın kaza tarihindeki hasarsız rayiç değerinin {rayic:,} TL olduğu tespit edilmiştir. 
-    Aracın kilometresi, yaşı ve hasarın boyutu ({", ".join(hasar_bolgesi)}) göz önüne alınarak; 
-    Yargıtay 17. Hukuk Dairesi prensiplerine uygun katsayılar ile yapılan hesaplama sonucunda;
-    
-    HESAPLANAN DEĞER KAYBI: {deger_kaybi:,.2f} TL
-    
-    SONUÇ: Aracın onarım sonrası ikinci el piyasasında oluşan değer azalışı yukarıda matematiksel olarak ispat edilmiştir.
-    
-    Bilirkişi Adı Soyadı: ................................
-    İmza:
-    """
-    st.text_area("Raporu Kopyala (UYAP uyumlu)", rapor_metni, height=400)
-    st.button("📥 PDF Olarak Kaydet (Hazırlanıyor...)")
+    deger_kaybi = rayic * baz_oran * yas_puan * km_puan * hasar_katsayi * k_yas * k_km
 
-if st.button("🚀 Tüm Verileri Analiz Et"):
-    st.balloons()
-    st.success("Analiz Başarıyla Tamamlandı!")
+    with tab_analysis:
+        st.markdown("#### 2. Matematiksel Değerlendirme")
+        
+        # Sonuç Kartları
+        m1, m2, m3 = st.columns(3)
+        with m1:
+            st.metric("Tespit Edilen Değer Kaybı", f"{deger_kaybi:,.2f} TL")
+        with m2:
+            st.metric("Hasar Sonrası Yeni Rayiç", f"{rayic - deger_kaybi:,.2f} TL")
+        with m3:
+            st.metric("Zarar Oranı / Rayiç", f"% {(deger_kaybi/rayic)*100:.1f}")
+        
+        st.divider()
+        
+        # Grafik
+        st.write("**Değer Değişim Grafiği**")
+        chart_data = pd.DataFrame({
+            "Kategori": ["Hasarsız", "Hasarlı"],
+            "Değer (TL)": [rayic, rayic - deger_kaybi]
+        })
+        st.bar_chart(chart_data.set_index("Kategori"))
+
+    with tab_report:
+        st.markdown("#### 3. Bilirkişi Rapor Taslağı")
+        st.info("Aşağıdaki metin UYAP ve Mahkeme formatına uygun şekilde oluşturulmuştur.")
+        
+        rapor = f"""
+        DOSYA NO: [Dosya Numarası Giriniz]
+        HUZURDAKİ ARAÇ: {yil} Model {marka} {model} ({km:,} KM)
+        
+        ANALİZ SONUCU:
+        Yapılan teknik inceleme, kaza sonrası onarım boyutu ve piyasa rayiçleri (Emsal: {rayic:,} TL) 
+        göz önüne alındığında, aracın kaza tarihindeki durumuna göre ikinci el satış değerinde 
+        {deger_kaybi:,.2f} TL tutarında bir eksilme (değer kaybı) olduğu kanaatine varılmıştır.
+        
+        DAYANAK:
+        Hesaplama; KM Katsayısı ({km_puan}), Yaş Katsayısı ({yas_puan}) ve Hasar Bölge Analizi 
+        parametreleri kullanılarak, denetime elverişli matematiksel modelleme ile yapılmıştır.
+        """
+        st.text_area("Kopyalanabilir Rapor", rapor, height=250)
+        st.button("🖨️ PDF Raporu Oluştur (Yakında)")
+else:
+    with tab_analysis:
+        st.warning("Lütfen önce veri girişi yapıp hesapla butonuna basınız.")
